@@ -10,6 +10,7 @@ private:
 	std::shared_ptr<float> Duration;
 	std::shared_ptr<int> XPos;
 	std::shared_ptr<int> YPos;
+	std::shared_ptr<int> DecimalPrecision;
     std::shared_ptr<LinearColor> TextColor;
 
 	bool bShowSpeed = false;
