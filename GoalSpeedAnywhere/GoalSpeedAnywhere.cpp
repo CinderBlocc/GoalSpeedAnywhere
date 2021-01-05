@@ -3,7 +3,7 @@
 #include <sstream>
 #include <iomanip>
 
-BAKKESMOD_PLUGIN(GoalSpeedAnywhere, "Show the goal speed in any game mode", "1.0", PLUGINTYPE_FREEPLAY)
+BAKKESMOD_PLUGIN(GoalSpeedAnywhere, "Show the goal speed in any game mode", "1.1", PLUGINTYPE_FREEPLAY)
 
 
 void GoalSpeedAnywhere::onLoad()
