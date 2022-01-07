@@ -53,10 +53,6 @@ void GoalSpeedAnywhere::GetSpeed()
 	if(ball.IsNull()) return;
 	
     Speed = ball.GetVelocity().magnitude();
-    if(abs(ball.GetLocation().Y) > 5228.45)
-    {   
-        ShowSpeed();
-    }
 }
 
 void GoalSpeedAnywhere::Render(CanvasWrapper canvas)
