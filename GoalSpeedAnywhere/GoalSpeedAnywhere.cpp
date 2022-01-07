@@ -2,6 +2,7 @@
 #include "bakkesmod\wrappers\includes.h"
 #include <sstream>
 #include <iomanip>
+#include <unordered_set>
 
 BAKKESMOD_PLUGIN(GoalSpeedAnywhere, "Show the goal speed in any game mode", "1.1", PLUGINTYPE_FREEPLAY)
 
@@ -51,7 +52,10 @@ void GoalSpeedAnywhere::GetSpeed()
 	if(server.IsNull()) return;
 	GameSettingPlaylistWrapper playlist = server.GetPlaylist();
 	if(playlist.IsNull()) return;
-	if(playlist.GetPlaylistId() == 17 || playlist.GetPlaylistId() == 23) return; // We currently don't support Hoops or Drop Shot
+
+	// Exclude some game modes where goals are not always outside of arena bounds, or horizontal
+	static const std::unordered_set<int> excludedPlaylistIds = { 15, 17, 18, 19, 23 }; // Snow Day, Hoops, Rumble, Workshop, Dropshot
+	if(excludedPlaylistIds.count(playlist.GetPlaylistId()) > 0) return;
 
 	BallWrapper ball = server.GetBall();
 	if(ball.IsNull()) return;
