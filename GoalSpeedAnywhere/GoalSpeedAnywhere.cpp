@@ -2,6 +2,7 @@
 #include "bakkesmod\wrappers\includes.h"
 #include <sstream>
 #include <iomanip>
+#include <unordered_set>
 
 BAKKESMOD_PLUGIN(GoalSpeedAnywhere, "Show the goal speed in any game mode", "1.1", PLUGINTYPE_FREEPLAY)
 
@@ -49,10 +50,34 @@ void GoalSpeedAnywhere::GetSpeed()
 	if(!(*bEnabled) || bShowSpeed) return;
 	ServerWrapper server = GetCurrentGameState();
 	if(server.IsNull()) return;
+	GameSettingPlaylistWrapper playlist = server.GetPlaylist();
+	if(playlist.IsNull()) return;
+
+	// Exclude some game modes where goals are not always outside of arena bounds, or horizontal
+	static const std::unordered_set<int> excludedPlaylistIds = { 15, 17, 18, 19, 23 }; // Snow Day, Hoops, Rumble, Workshop, Dropshot
+	if(excludedPlaylistIds.count(playlist.GetPlaylistId()) > 0) return;
+
 	BallWrapper ball = server.GetBall();
 	if(ball.IsNull()) return;
-	
-    Speed = ball.GetVelocity().magnitude();
+
+	Speed = ball.GetVelocity().magnitude();
+
+	auto ballRadius = ball.GetRadius();
+
+	ArrayWrapper<GoalWrapper> goalWrappers = server.GetGoals();
+	for(auto goalWrapper : goalWrappers)
+	{
+		auto location = goalWrapper.GetLocation();
+		if(!ballIsInsideGoal && abs(ball.GetLocation().Y) >= (abs(location.Y) + ballRadius) )
+		{
+			ballIsInsideGoal = true;
+			ShowSpeed();
+		}
+		else if(ballIsInsideGoal && abs(ball.GetLocation().Y) < (abs(location.Y) + ballRadius))
+		{
+			ballIsInsideGoal = false;
+		}
+	}
 }
 
 void GoalSpeedAnywhere::Render(CanvasWrapper canvas)

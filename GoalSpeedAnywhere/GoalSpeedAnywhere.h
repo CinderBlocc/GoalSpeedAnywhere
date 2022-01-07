@@ -15,6 +15,7 @@ private:
 
 	bool bShowSpeed = false;
 	float Speed = 0;
+	bool ballIsInsideGoal = false;
 
 public:
 	void onLoad() override;
