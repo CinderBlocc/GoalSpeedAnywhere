@@ -23,8 +23,6 @@ void GoalSpeedAnywhere::onLoad()
 	cvarManager->registerCvar("GSA_Decimal_Precision", "2", "Goal speed anywhere decimal places to display", true, true, 0, true, 6).bindTo(DecimalPrecision);
 	cvarManager->registerCvar("GSA_Color", "(0, 255, 0, 255)", "Goal speed anywhere text color", true).bindTo(TextColor);
 
-	gameWrapper->HookEvent("Function TAGame.Ball_TA.OnHitGoal", std::bind(&GoalSpeedAnywhere::ShowSpeed, this));
-	gameWrapper->HookEvent("Function TAGame.Ball_TA.Explode", std::bind(&GoalSpeedAnywhere::ShowSpeed, this));
 	gameWrapper->HookEvent("Function Engine.GameViewportClient.Tick", std::bind(&GoalSpeedAnywhere::GetSpeed, this));
 	
 	gameWrapper->RegisterDrawable(bind(&GoalSpeedAnywhere::Render, this, std::placeholders::_1));
@@ -33,6 +31,7 @@ void GoalSpeedAnywhere::onUnload() {}
 
 void GoalSpeedAnywhere::ShowSpeed()
 {
+	cvarManager->log("Function triggered");
 	if(!(*bEnabled)) return;
 	bShowSpeed = true;
 
@@ -49,10 +48,30 @@ void GoalSpeedAnywhere::GetSpeed()
 	if(!(*bEnabled) || bShowSpeed) return;
 	ServerWrapper server = GetCurrentGameState();
 	if(server.IsNull()) return;
+	GameSettingPlaylistWrapper playlist = server.GetPlaylist();
+	if(playlist.IsNull()) return;
+	if(playlist.GetPlaylistId() == 17 || playlist.GetPlaylistId() == 23) return; // We currently don't support Hoops or Drop Shot
+
 	BallWrapper ball = server.GetBall();
 	if(ball.IsNull()) return;
-	
-    Speed = ball.GetVelocity().magnitude();
+
+	Speed = ball.GetVelocity().magnitude();
+
+	ArrayWrapper<GoalWrapper> goalWrappers = server.GetGoals();
+	for(auto goalWrapper : goalWrappers)
+	{
+		auto location = goalWrapper.GetLocation();
+		if(!ballIsInsideGoal && abs(ball.GetLocation().Y) >= abs(location.Y))
+		{
+			ballIsInsideGoal = true;
+			ShowSpeed();
+		}
+		else if(ballIsInsideGoal && abs(ball.GetLocation().Y) < abs(location.Y))
+		{
+			ballIsInsideGoal = false;
+		}
+	}
+		
 }
 
 void GoalSpeedAnywhere::Render(CanvasWrapper canvas)
