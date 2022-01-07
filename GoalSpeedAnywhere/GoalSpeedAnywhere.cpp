@@ -23,6 +23,8 @@ void GoalSpeedAnywhere::onLoad()
 	cvarManager->registerCvar("GSA_Decimal_Precision", "2", "Goal speed anywhere decimal places to display", true, true, 0, true, 6).bindTo(DecimalPrecision);
 	cvarManager->registerCvar("GSA_Color", "(0, 255, 0, 255)", "Goal speed anywhere text color", true).bindTo(TextColor);
 
+	gameWrapper->HookEvent("Function TAGame.Ball_TA.OnHitGoal", std::bind(&GoalSpeedAnywhere::ShowSpeed, this));
+	gameWrapper->HookEvent("Function TAGame.Ball_TA.Explode", std::bind(&GoalSpeedAnywhere::ShowSpeed, this));
 	gameWrapper->HookEvent("Function Engine.GameViewportClient.Tick", std::bind(&GoalSpeedAnywhere::GetSpeed, this));
 	
 	gameWrapper->RegisterDrawable(bind(&GoalSpeedAnywhere::Render, this, std::placeholders::_1));
@@ -56,21 +58,22 @@ void GoalSpeedAnywhere::GetSpeed()
 
 	Speed = ball.GetVelocity().magnitude();
 
+	auto ballRadius = ball.GetRadius();
+
 	ArrayWrapper<GoalWrapper> goalWrappers = server.GetGoals();
 	for(auto goalWrapper : goalWrappers)
 	{
 		auto location = goalWrapper.GetLocation();
-		if(!ballIsInsideGoal && abs(ball.GetLocation().Y) >= abs(location.Y))
+		if(!ballIsInsideGoal && abs(ball.GetLocation().Y) >= (abs(location.Y) + ballRadius) )
 		{
 			ballIsInsideGoal = true;
 			ShowSpeed();
 		}
-		else if(ballIsInsideGoal && abs(ball.GetLocation().Y) < abs(location.Y))
+		else if(ballIsInsideGoal && abs(ball.GetLocation().Y) < (abs(location.Y) + ballRadius))
 		{
 			ballIsInsideGoal = false;
 		}
 	}
-		
 }
 
 void GoalSpeedAnywhere::Render(CanvasWrapper canvas)
