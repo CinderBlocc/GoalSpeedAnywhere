@@ -31,7 +31,6 @@ void GoalSpeedAnywhere::onUnload() {}
 
 void GoalSpeedAnywhere::ShowSpeed()
 {
-	cvarManager->log("Function triggered");
 	if(!(*bEnabled)) return;
 	bShowSpeed = true;
 
