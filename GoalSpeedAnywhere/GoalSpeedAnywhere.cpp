@@ -45,6 +45,8 @@ void GoalSpeedAnywhere::onUnload() {}
 void GoalSpeedAnywhere::ShowSpeed()
 {
 	if(!(*bEnabled)) return;
+	if (Speed < FLT_EPSILON) return; // A goal speed of zero most likely wasn't a goal, but an event sent during goal replay or something.
+
 	bShowSpeed = true;
 
 	gameWrapper->SetTimeout(std::bind(&GoalSpeedAnywhere::HideSpeed, this), *Duration);
