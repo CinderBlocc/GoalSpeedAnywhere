@@ -6,6 +6,9 @@
 
 BAKKESMOD_PLUGIN(GoalSpeedAnywhere, "Show the goal speed in any game mode", "1.1", PLUGINTYPE_FREEPLAY)
 
+struct BallExplodeParams {
+	uintptr_t goal;
+};
 
 void GoalSpeedAnywhere::onLoad()
 {
@@ -25,7 +28,14 @@ void GoalSpeedAnywhere::onLoad()
 	cvarManager->registerCvar("GSA_Color", "(0, 255, 0, 255)", "Goal speed anywhere text color", true).bindTo(TextColor);
 
 	gameWrapper->HookEvent("Function TAGame.Ball_TA.OnHitGoal", std::bind(&GoalSpeedAnywhere::ShowSpeed, this));
-	gameWrapper->HookEvent("Function TAGame.Ball_TA.Explode", std::bind(&GoalSpeedAnywhere::ShowSpeed, this));
+	gameWrapper->HookEventWithCaller<BallWrapper>("Function TAGame.Ball_TA.Explode", [this](BallWrapper caller, void* params, std::string eventname) {
+		auto explosionParams = (BallExplodeParams*)params;
+		if(explosionParams->goal > 0)
+		{
+			ShowSpeed();
+		}
+		// else: The ball exploded for a different reason. Most likely the timer ran out and the ball touched the ground.
+	});
 	gameWrapper->HookEvent("Function Engine.GameViewportClient.Tick", std::bind(&GoalSpeedAnywhere::GetSpeed, this));
 	
 	gameWrapper->RegisterDrawable(bind(&GoalSpeedAnywhere::Render, this, std::placeholders::_1));
