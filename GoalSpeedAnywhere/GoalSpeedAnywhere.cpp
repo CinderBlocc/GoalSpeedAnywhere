@@ -52,15 +52,25 @@ void GoalSpeedAnywhere::GetSpeed()
 	if(server.IsNull()) return;
 	GameSettingPlaylistWrapper playlist = server.GetPlaylist();
 	if(playlist.IsNull()) return;
-
-	// Exclude some game modes where goals are not always outside of arena bounds, or horizontal
-	static const std::unordered_set<int> excludedPlaylistIds = { 15, 17, 18, 19, 23 }; // Snow Day, Hoops, Rumble, Workshop, Dropshot
-	if(excludedPlaylistIds.count(playlist.GetPlaylistId()) > 0) return;
-
 	BallWrapper ball = server.GetBall();
 	if(ball.IsNull()) return;
 
 	Speed = ball.GetVelocity().magnitude();
+
+	// The following code is only required for cases where OnHitGoal and Explode events are not sent
+	// Currently this can only happen in freeplay with goal scoring turned off in Bakkesmod.
+	// The issue in this case is that there is no event to hook in to, so we need to manually check if the ball is inside the goal and was outside before.
+	auto goalScoringIsEnabledVar = cvarManager->getCvar("sv_soccar_enablegoal");
+	if(goalScoringIsEnabledVar.IsNull()) return;
+
+	auto goalScoringIsEnabled = goalScoringIsEnabledVar.getBoolValue();
+	auto isInFreePlay = gameWrapper->IsInFreeplay();
+	if(goalScoringIsEnabled || !isInFreePlay) return;
+
+	// This currently only works for "standard" goal areas, i.e. not for goal areas within the pitch (some snow day and rumble maps)
+	// or horizontal goal areas (hoops and drop shot).
+	static const std::unordered_set<int> excludedPlaylistIds = { 15, 17, 18, 19, 23 }; // Snow Day, Hoops, Rumble, Workshop, Dropshot
+	if(excludedPlaylistIds.count(playlist.GetPlaylistId()) > 0) return;
 
 	auto ballRadius = ball.GetRadius();
 
