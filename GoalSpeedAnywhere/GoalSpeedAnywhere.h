@@ -12,6 +12,7 @@ private:
 	std::shared_ptr<int> YPos;
 	std::shared_ptr<int> DecimalPrecision;
     std::shared_ptr<LinearColor> TextColor;
+	std::shared_ptr<bool> bGoalScoringIsEnabled;
 
 	bool bShowSpeed = false;
 	float Speed = 0;

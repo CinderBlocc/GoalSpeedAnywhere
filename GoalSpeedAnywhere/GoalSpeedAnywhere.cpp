@@ -19,6 +19,7 @@ void GoalSpeedAnywhere::onLoad()
 	YPos = std::make_shared<int>(0);
 	DecimalPrecision = std::make_shared<int>(0);
     TextColor = std::make_shared<LinearColor>();
+	bGoalScoringIsEnabled = std::make_shared<bool>(false);
 	cvarManager->registerCvar("GSA_Enable", "1", "Show goal speed anywhere", true, true, 0, true, 1).bindTo(bEnabled);
 	cvarManager->registerCvar("GSA_Shadow", "1", "Goal speed anywhere text drop shadow", true, true, 0, true, 1).bindTo(bDropShadow);
 	cvarManager->registerCvar("GSA_Duration", "2", "Goal speed anywhere display duration", true, true, 0, true, 10).bindTo(Duration);
@@ -27,10 +28,13 @@ void GoalSpeedAnywhere::onLoad()
 	cvarManager->registerCvar("GSA_Decimal_Precision", "2", "Goal speed anywhere decimal places to display", true, true, 0, true, 6).bindTo(DecimalPrecision);
 	cvarManager->registerCvar("GSA_Color", "(0, 255, 0, 255)", "Goal speed anywhere text color", true).bindTo(TextColor);
 
+	// Bind a boolean flag to the bakkesmod variable which tells us whether goal scoring/explosion is enabled or has been turned off.
+	cvarManager->getCvar("sv_soccar_enablegoal").bindTo(bGoalScoringIsEnabled);
+	
 	gameWrapper->HookEvent("Function TAGame.Ball_TA.OnHitGoal", std::bind(&GoalSpeedAnywhere::ShowSpeed, this));
 	gameWrapper->HookEventWithCaller<BallWrapper>("Function TAGame.Ball_TA.Explode", [this](BallWrapper caller, void* params, std::string eventname) {
 		auto explosionParams = (BallExplodeParams*)params;
-		if(explosionParams->goal > 0)
+		if(explosionParams->goal != NULL)
 		{
 			ShowSpeed();
 		}
@@ -72,12 +76,8 @@ void GoalSpeedAnywhere::GetSpeed()
 	// The following code is only required for cases where OnHitGoal and Explode events are not sent
 	// Currently this can only happen in freeplay with goal scoring turned off in Bakkesmod.
 	// The issue in this case is that there is no event to hook in to, so we need to manually check if the ball is inside the goal and was outside before.
-	auto goalScoringIsEnabledVar = cvarManager->getCvar("sv_soccar_enablegoal");
-	if(goalScoringIsEnabledVar.IsNull()) return;
-
-	auto goalScoringIsEnabled = goalScoringIsEnabledVar.getBoolValue();
 	auto isInFreePlay = gameWrapper->IsInFreeplay();
-	if(goalScoringIsEnabled || !isInFreePlay) return;
+	if(*bGoalScoringIsEnabled || !isInFreePlay) return;
 
 	// This currently only works for "standard" goal areas, i.e. not for goal areas within the pitch (some snow day and rumble maps)
 	// or horizontal goal areas (hoops and drop shot).
