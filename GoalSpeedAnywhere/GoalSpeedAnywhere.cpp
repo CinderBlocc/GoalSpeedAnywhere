@@ -71,7 +71,7 @@ void GoalSpeedAnywhere::GetSpeed()
 	BallWrapper ball = server.GetBall();
 	if(ball.IsNull()) return;
 
-	Speed = ball.GetVelocity().magnitude();
+	Speed = ball.GetCurrentRBState().LinearVelocity.magnitude();
 
 	// The following code is only required for cases where OnHitGoal and Explode events are not sent
 	// Currently this can only happen in freeplay with goal scoring turned off in Bakkesmod.
